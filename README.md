@@ -1,4 +1,5 @@
-#Projeto Fullstack de Gerenciamento de Contatos ( MyContatcs )
+Projeto Fullstack de Gerenciamento de Contatos ( MyContatcs )
+
 Este é um projeto fullstack que permite aos usuários se cadastrarem, fazerem login e adicionarem contatos organizados em ordem alfabética. O projeto utiliza as tecnologias Spring Boot para o backend (API) e React para o frontend.
 
 Funcionalidades Principais
