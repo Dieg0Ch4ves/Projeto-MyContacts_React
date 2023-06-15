@@ -1,0 +1,103 @@
+package MyContactsBack.MyContactsBack.controllers;
+
+import java.util.Comparator;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import MyContactsBack.MyContactsBack.controllers.models.ContatosDTO;
+import MyContactsBack.MyContactsBack.entity.Contatos;
+import MyContactsBack.MyContactsBack.entity.Usuario;
+import MyContactsBack.MyContactsBack.repository.ContatosRepository;
+import MyContactsBack.MyContactsBack.repository.UsuarioRepository;
+
+@RestController
+@RequestMapping("/contato")
+@CrossOrigin(origins = "*")
+public class ContatosController {
+
+	@Autowired
+	ContatosRepository contatosRepository;
+
+	@Autowired
+	UsuarioRepository usuarioRepository;
+
+	@PostMapping("/{idUsuario}")
+	public ResponseEntity<Contatos> novoContato(@PathVariable Long idUsuario, @RequestBody ContatosDTO contatosTdo) {
+		Usuario usuario = usuarioRepository.findById(idUsuario).get();
+		Contatos contato = new Contatos(contatosTdo.nome(), contatosTdo.email(), contatosTdo.telefone(),
+				contatosTdo.redeSocial(), usuario);
+		Contatos contatoCriado = contatosRepository.save(contato);
+		return ResponseEntity.ok(contatoCriado);
+	}
+
+	@GetMapping("/{idUsuario}")
+	public ResponseEntity<List<Contatos>> listarContatosOrderBy(@PathVariable Long idUsuario,
+			@RequestParam(required = false) String orderBy) {
+		Usuario usuario = usuarioRepository.findById(idUsuario).get();
+		List<Contatos> listaUsuario = usuario.getListaContatos();
+		if (orderBy != null) {
+			switch (orderBy) {
+			case "nome":
+				listaUsuario.sort(Comparator.comparing(Contatos::getNome));
+				break;
+			case "email":
+				listaUsuario.sort(Comparator.comparing(Contatos::getEmail));
+				break;
+			default:
+				break;
+			}
+		}
+		return ResponseEntity.ok(listaUsuario);
+	}
+
+	@GetMapping("/contatoId/{idContato}")
+	public ResponseEntity<Contatos> listarContatoPorId(@PathVariable Long idContato) {
+		Contatos contato = contatosRepository.findById(idContato).get();
+		return ResponseEntity.ok(contato);
+	}
+
+	@PutMapping("/{id}")
+	public ResponseEntity<Object> atualizarTarefa(@PathVariable Long id, @RequestBody ContatosDTO contatoDto) {
+		Contatos contato = contatosRepository.findById(id).get();
+		contato.setNome(contatoDto.nome());
+		contato.setEmail(contatoDto.email());
+		contato.setTelefone(contatoDto.telefone());
+		contato.setRedeSocial(contatoDto.redeSocial());
+		contatosRepository.save(contato);
+		return ResponseEntity.ok(contato);
+	}
+
+	@DeleteMapping("/{idUsuario}/{idContato}")
+	public void deletarTarefa(@PathVariable Long idUsuario, @PathVariable Long idContato) {
+		Usuario usuario = usuarioRepository.findById(idUsuario).get();
+		List<Contatos> listaUsuario = usuario.getListaContatos();
+
+		int indiceContato = -1;
+		for (int i = 0; i < listaUsuario.size(); i++) {
+			if (listaUsuario.get(i).getId().equals(idContato)) {
+				indiceContato = i;
+				break;
+			}
+		}
+
+		if (indiceContato != -1) {
+			listaUsuario.remove(indiceContato);
+			usuarioRepository.save(usuario);
+		} else {
+			throw new IllegalArgumentException("Tarefa não encontrada: " + idContato);
+		}
+	}
+
+}
